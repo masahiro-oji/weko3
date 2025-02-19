@@ -394,18 +394,27 @@ services:
 
   inbox:
     restart: "always"
-    build: ./coar-notify-inbox
+    build:
+      context: ./inbox
+      dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8080:8080"
     environment:
-      - NOTIFY_LDN_INBOX_DB_PATH=/opt/data/ldn_inbox.sqlite
-      - NOTIFY_LDN_INBOX_HOST=127.0.0.1
-      - NOTIFY_LDN_INBOX_DEBUG=true
-      - NOTIFY_LDN_INBOX_PORT=8000
+      - MONGO_DB_URI=mongodb://inbox:ibpass123@mongo:27017
+    links:
+      - mongo
+    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+
+  mongo:
+    restart: "always"
+    image: mongo:7.0.14
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=inbox
+      - MONGO_INITDB_ROOT_PASSWORD=ibpass123
+    ports:
+      - "27017:27017"
     volumes:
-      - type: bind
-        source: ./coar-notify-inbox
-        target: /go/src/app
+      - mongo_data:/data/db
 
 #  kibana:
 #    build:
@@ -429,6 +438,7 @@ volumes:
   conf_data:
   pgsql-data:
   es-data:
+  mongo_data:
 #  letsencrypt_etc:
 #  letsencrypt_html:
 
